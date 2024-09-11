@@ -81,6 +81,7 @@ OPTIMIZER_CONFIG = {
     "weight_decay": ARGS.weight_decay,
 }
 
+# Toggle Time connections by changing apply_time2vec variable
 if ARGS.dataset=="ushcn":
     from tsdm.tasks import USHCN_DeBrouwer2019
     TASK = USHCN_DeBrouwer2019(normalize_time=True, condition_time=ARGS.cond_time, forecast_horizon = ARGS.forc_time, num_folds=ARGS.nfolds)
@@ -92,7 +93,7 @@ elif ARGS.dataset=="mimiciv":
     TASK = MIMIC_IV_Bilos2021(normalize_time=True, condition_time=ARGS.cond_time, forecast_horizon = ARGS.forc_time, num_folds=ARGS.nfolds)
 elif ARGS.dataset=='physionet2012':
     from tsdm.tasks.physionet2012 import Physionet2012
-    TASK = Physionet2012(normalize_time=True, condition_time=ARGS.cond_time, forecast_horizon = ARGS.forc_time, num_folds=ARGS.nfolds)
+    TASK = Physionet2012(normalize_time=True, condition_time=ARGS.cond_time, forecast_horizon = ARGS.forc_time, num_folds=ARGS.nfolds, apply_time2vec = True)
 
 
 from gratif.gratif import tsdm_collate

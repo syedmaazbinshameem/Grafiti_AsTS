@@ -219,12 +219,12 @@ class Physionet2012(BaseTask):
         channel_df = DataFrame(encoded_time, index=ts.index, columns=[f'channel_{i}' for i in range(encoded_time.shape[1])])
         ts = ts.join(channel_df)
 
-        print("Shape after adding 'channel_column':", ts.shape)
-        print(ts.head())
-        null_counts = ts.isnull().sum()
-        print(null_counts)
-        rows_with_nulls = ts[ts.isnull().any(axis=1)]
-        print(rows_with_nulls)
+        # print("Shape after adding 'channel_column':", ts.shape)
+        # print(ts.head())
+        # null_counts = ts.isnull().sum()
+        # print(null_counts)
+        # rows_with_nulls = ts[ts.isnull().any(axis=1)]
+        # print(rows_with_nulls)
 
         return ts
 

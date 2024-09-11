@@ -1,7 +1,8 @@
 # GraFITi
 
 This is the source code for the paper ``GraFITi: Graphs for Forecasting of Irregularly sampled Time Series``
-Slight modification done for our Student Research Project
+Slight modification done for our Student Research Project (SRP):
+Toggle apply_time2vec in train_grafiti.py file to apply SRP change.
 
 
 # Requirements
