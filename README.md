@@ -1,16 +1,22 @@
 # GraFITi
 
 This is the source code for the paper ``GraFITi: Graphs for Forecasting of Irregularly sampled Time Series``
+Slight modification done for our Student Research Project
 
 
 # Requirements
-python                    3.8.11
+<!-- python                    3.8.11
 
 Pytorch                   1.9.0
 
 sklearn                   0.0
 
-numpy                     1.19.3
+numpy                     1.19.3 -->
+
+Refer to requirements.txt file
+```
+pip install -r requirements.txt
+```
 
 # Training and Evaluation
 
