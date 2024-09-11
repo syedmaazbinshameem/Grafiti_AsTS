@@ -20,13 +20,14 @@ parser.add_argument("-s",  "--seed",         default=None,   type=int,   help="S
 parser.add_argument("-nl",  "--nlayers", default=2,   type=int,   help="")
 parser.add_argument("-ahd",  "--attn-head", default=2,   type=int,   help="")
 parser.add_argument("-ldim",  "--latent-dim", default=128,   type=int,   help="")
-parser.add_argument("-dset", "--dataset", default="ushcn", type=str, help="Name of the dataset")
+# parser.add_argument("-dset", "--dataset", default="ushcn", type=str, help="Name of the dataset")
+parser.add_argument("-dset", "--dataset", default="physionet2012", type=str, help="Name of the dataset")
 parser.add_argument("-ft", "--forc-time", default=0, type=int, help="forecast horizon in hours")
 parser.add_argument("-ct", "--cond-time", default=36, type=int, help="conditioning range in hours")
 parser.add_argument("-nf", "--nfolds", default=5, type=int, help="#folds for crossvalidation")
 
-import pdb
-# fmt: on
+# import pdb
+# # fmt: on
 
 ARGS = parser.parse_args()
 print(' '.join(sys.argv))
@@ -61,6 +62,9 @@ torch.backends.cuda.matmul.allow_tf32 = True
 torch.backends.cudnn.allow_tf32 = True
 torch.backends.cudnn.benchmark = True
 
+print("Is CUDA available?", torch.cuda.is_available())
+print("Device name:", torch.cuda.get_device_name(0) if torch.cuda.is_available() else "No GPU found.")
+
 warnings.filterwarnings(action="ignore", category=UserWarning, module="torch")
 logging.basicConfig(level=logging.WARN)
 HTML("<style>.jp-OutputArea-prompt:empty {padding: 0; border: 0;}</style>")
@@ -72,7 +76,8 @@ if ARGS.seed is not None:
 
 OPTIMIZER_CONFIG = {
     "lr": ARGS.learn_rate,
-    "betas": torch.tensor(ARGS.betas),
+    "betas": ARGS.betas,
+    # "betas": (0.9, 0.999),
     "weight_decay": ARGS.weight_decay,
 }
 
@@ -97,7 +102,7 @@ dloader_config_train = {
     "shuffle": True,
     "drop_last": True,
     "pin_memory": True,
-    "num_workers": 4,
+    "num_workers": 0,
     "collate_fn": tsdm_collate,
 }
 
@@ -178,6 +183,16 @@ from torch.optim import AdamW
 
 OPTIMIZER = AdamW(MODEL.parameters(), **OPTIMIZER_CONFIG)
 scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(OPTIMIZER, 'min', patience=10, factor=0.5, min_lr=0.00001, verbose=True)
+
+### addition 1
+import os
+
+# Define the directory path where you want to save the model checkpoints
+save_dir = 'saved_models/'
+
+# Create the directory if it doesn't exist
+if not os.path.exists(save_dir):
+    os.makedirs(save_dir)
 
 es = False
 best_val_loss = 10e8

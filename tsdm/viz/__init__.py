@@ -12,7 +12,7 @@ __all__ = [
     "center_axes",
 ]
 
-from tsdm.viz._config import USE_TEX
+# from tsdm.viz._config import USE_TEX
 from tsdm.viz._image import kernel_heatmap
 from tsdm.viz._plotting import (
     center_axes,

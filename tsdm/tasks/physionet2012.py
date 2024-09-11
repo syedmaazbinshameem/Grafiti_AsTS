@@ -29,6 +29,25 @@ from tsdm.utils.strings import repr_namedtuple
 import pdb
 import pandas as pd
 
+from tsdm.similarity.time2vec import Time2Vec
+
+import torch
+import torch.nn as nn
+
+# class Time2Vec(nn.Module):
+#     def __init__(self, input_size: int, output_size: int):
+#         super(Time2Vec, self).__init__()
+#         self.output_size = output_size
+#         self.linear = nn.Linear(input_size, 1, bias=False)
+#         self.sinusoid = nn.Linear(input_size, output_size - 1, bias=False)
+
+#     def forward(self, x: torch.Tensor) -> torch.Tensor:
+#         # Apply the linear transformation
+#         lin = self.linear(x)
+#         # Apply the sinusoidal transformation
+#         sin = torch.sin(self.sinusoid(x))
+#         return torch.cat([lin, sin], dim=-1)
+
 class Inputs(NamedTuple):
     r"""A single sample of the data."""
 
@@ -164,7 +183,7 @@ class Physionet2012(BaseTask):
 
     encoder: FrameEncoder[Standardizer, dict[Any, MinMaxScaler]]
 
-    def __init__(self, normalize_time: bool = True, condition_time: int = 36, forecast_horizon: int = 0, num_folds: int = 5):
+    def __init__(self, normalize_time: bool = True, condition_time: int = 36, forecast_horizon: int = 0, num_folds: int = 5, apply_time2vec: bool = True):
         super().__init__()
         # prediction steps is 3 by default, otherwise it is the number of hours to predict in future
         if forecast_horizon == 0:
@@ -177,8 +196,37 @@ class Physionet2012(BaseTask):
             column_encoders=Standardizer(),
             index_encoders={"Time": MinMaxScaler()},
         )
+
+        if apply_time2vec:
+            self.dataset = self.apply_time2vec_transformation(self.dataset)
+        else:
+            self.dataset = self.dataset
         self.normalize_time = normalize_time
         self.IDs = self.dataset.reset_index()["RecordID"].unique()
+
+    # Time2Vec
+    def apply_time2vec_transformation(self, ts: DataFrame, input_size: int = 1, output_size: int = 1) -> DataFrame:
+        """Apply the Time2Vec transformation to the dataset."""
+
+        time2vec_model = Time2Vec(input_size=input_size, output_size=4)
+
+
+        time_tensor = torch.tensor(ts.index.get_level_values('Time').values, dtype=torch.float32).view(-1, 1)
+
+
+        encoded_time = time2vec_model(time_tensor).detach().numpy()
+
+        channel_df = DataFrame(encoded_time, index=ts.index, columns=[f'channel_{i}' for i in range(encoded_time.shape[1])])
+        ts = ts.join(channel_df)
+
+        print("Shape after adding 'channel_column':", ts.shape)
+        print(ts.head())
+        null_counts = ts.isnull().sum()
+        print(null_counts)
+        rows_with_nulls = ts[ts.isnull().any(axis=1)]
+        print(rows_with_nulls)
+
+        return ts
 
     @cached_property
     def dataset(self) -> DataFrame:
