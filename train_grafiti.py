@@ -93,7 +93,7 @@ elif ARGS.dataset=="mimiciv":
     TASK = MIMIC_IV_Bilos2021(normalize_time=True, condition_time=ARGS.cond_time, forecast_horizon = ARGS.forc_time, num_folds=ARGS.nfolds)
 elif ARGS.dataset=='physionet2012':
     from tsdm.tasks.physionet2012 import Physionet2012
-    TASK = Physionet2012(normalize_time=True, condition_time=ARGS.cond_time, forecast_horizon = ARGS.forc_time, num_folds=ARGS.nfolds, apply_time2vec = True)
+    TASK = Physionet2012(normalize_time=True, condition_time=ARGS.cond_time, forecast_horizon = ARGS.forc_time, num_folds=ARGS.nfolds)
 
 
 from gratif.gratif import tsdm_collate
@@ -124,6 +124,7 @@ EVAL_LOADERS = {"train": INFER_LOADER, "valid": VALID_LOADER, "test": TEST_LOADE
 
 def MSE(y: Tensor, yhat: Tensor, mask: Tensor) -> Tensor:
     err = torch.mean((y[mask] - yhat[mask])**2)
+    # print(y[mask].shape)
     return err
 
 
@@ -162,7 +163,10 @@ def predict_fn(model, batch) -> tuple[Tensor, Tensor, Tensor]:
     """Get targets and predictions."""
     T, X, M, TY, Y, MY = (tensor.to(DEVICE) for tensor in batch)
     output, target_U_, target_mask_ = model(T, X, M, TY, Y, MY)
+
+
     return target_U_, output.squeeze(), target_mask_
+    # Y, YHAT, MASK, ORIGINAL_MASK
 
 
 batch = next(iter(TRAIN_LOADER))

@@ -28,6 +28,7 @@ from tsdm.tasks.base import BaseTask
 from tsdm.utils import is_partition
 from tsdm.utils.strings import repr_namedtuple
 
+from tsdm.similarity.time2vec import Time2Vec
 
 class Inputs(NamedTuple):
     r"""A single sample of the data."""
@@ -194,10 +195,18 @@ class USHCN_DeBrouwer2019(BaseTask):
     test_size = 0.1  # of total
     valid_size = 0.2  # of train, i.e. 0.9*0.2 = 0.18
 
-    def __init__(self, normalize_time: bool = False, condition_time: int = 36, forecast_horizon: int = 0, num_folds: int = 5):
+    def __init__(self, normalize_time: bool = False, condition_time: int = 150, forecast_horizon: int = 0, num_folds: int = 5):
         super().__init__()
         self.normalize_time = normalize_time
+        # prediction steps is 3 by default, otherwise it is the number of hours to predict in future
+        if forecast_horizon == 0:
+            self.prediction_steps = 3
+        else:
+            self.prediction_steps = forecast_horizon
+
+        # self.normalize_time = normalize_time
         self.IDs = self.dataset.reset_index()["ID"].unique()
+
 
     @cached_property
     def dataset(self) -> DataFrame:
@@ -211,6 +220,7 @@ class USHCN_DeBrouwer2019(BaseTask):
             ts["Time"] /= t_max
             ts = ts.set_index(["ID", "Time"])
         ts = ts.dropna(axis=1, how="all").copy()
+
         return ts
 
     @cached_property
@@ -329,10 +339,14 @@ class USHCN_DeBrouwer2019(BaseTask):
         r"""Return the dataloader for the given key."""
         fold, partition = key
         fold_idx = self.folds[fold][partition]
+
+
         dataset = TaskDataset(
             [val for idx, val in self.tensors.items() if idx in fold_idx],
             observation_time=self.observation_time,
             prediction_steps=self.prediction_steps,
         )
+        # print(dataset.prediction_steps)
         kwargs: dict[str, Any] = {"collate_fn": lambda *x: x} | dataloader_kwargs
         return DataLoader(dataset, **kwargs)
+    

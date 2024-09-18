@@ -2,15 +2,18 @@ import torch
 import torch.nn as nn
 
 class Time2Vec(nn.Module):
-    def __init__(self, input_size: int, output_size: int):
+    def __init__(self, seq_len, d):
         super(Time2Vec, self).__init__()
-        self.output_size = output_size
-        self.linear = nn.Linear(input_size, 1, bias=False)
-        self.sinusoid = nn.Linear(input_size, output_size - 1, bias=False)
+        self.seq_len = seq_len
+        self.d = d
+        
+        self.time_linear = nn.Linear(1, d)
+        self.time_periodic = nn.Parameter(torch.randn(1, d))
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        # Apply the linear transformation
-        lin = self.linear(x)
-        # Apply the sinusoidal transformation
-        sin = torch.sin(self.sinusoid(x))
-        return torch.cat([lin, sin], dim=-1)
+    def forward(self, time_steps):
+        time_steps = time_steps.unsqueeze(-1)  #BxTx1
+        
+        linear_out = self.time_linear(time_steps)
+        periodic_out = torch.sin(time_steps * self.time_periodic)
+        
+        return linear_out + periodic_out

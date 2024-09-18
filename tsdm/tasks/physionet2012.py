@@ -12,7 +12,7 @@ from collections.abc import Callable, Iterator, Mapping, Sequence
 from dataclasses import dataclass
 from functools import cached_property
 from typing import Any, NamedTuple
-
+import numpy as np
 import torch
 from pandas import DataFrame, Index, MultiIndex
 from sklearn.model_selection import train_test_split
@@ -183,7 +183,7 @@ class Physionet2012(BaseTask):
 
     encoder: FrameEncoder[Standardizer, dict[Any, MinMaxScaler]]
 
-    def __init__(self, normalize_time: bool = True, condition_time: int = 36, forecast_horizon: int = 0, num_folds: int = 5, apply_time2vec: bool = True):
+    def __init__(self, normalize_time: bool = True, condition_time: int = 36, forecast_horizon: int = 0, num_folds: int = 5):
         super().__init__()
         # prediction steps is 3 by default, otherwise it is the number of hours to predict in future
         if forecast_horizon == 0:
@@ -197,62 +197,66 @@ class Physionet2012(BaseTask):
             index_encoders={"Time": MinMaxScaler()},
         )
 
-        if apply_time2vec:
-            self.dataset = self.apply_time2vec_transformation(self.dataset)
-        else:
-            self.dataset = self.dataset
+        # if apply_time2vec:
+        #     self.dataset = self.apply_time2vec_transformation(self.dataset)
+        # else:
+        #     self.dataset = self.dataset
         self.normalize_time = normalize_time
+        
         self.IDs = self.dataset.reset_index()["RecordID"].unique()
+        # self.apply_time2vec = apply_time2vec
 
-    # Time2Vec
-    def apply_time2vec_transformation(self, ts: DataFrame, input_size: int = 1, output_size: int = 1) -> DataFrame:
-        """Apply the Time2Vec transformation to the dataset."""
+    # # Time2Vec
+    # def apply_time2vec_transformation(self, ts: DataFrame, input_size: int = 1, output_size: int = 1) -> DataFrame:
+    #     """Apply the Time2Vec transformation to the dataset."""
 
-        time2vec_model = Time2Vec(input_size=input_size, output_size=4)
-
-
-        time_tensor = torch.tensor(ts.index.get_level_values('Time').values, dtype=torch.float32).view(-1, 1)
+    #     time2vec_model = Time2Vec(input_size=input_size, output_size=4)
 
 
-        encoded_time = time2vec_model(time_tensor).detach().numpy()
+    #     time_tensor = torch.tensor(ts.index.get_level_values('Time').values, dtype=torch.float32).view(-1, 1)
 
-        channel_df = DataFrame(encoded_time, index=ts.index, columns=[f'channel_{i}' for i in range(encoded_time.shape[1])])
-        ts = ts.join(channel_df)
 
-        # print("Shape after adding 'channel_column':", ts.shape)
-        # print(ts.head())
-        # null_counts = ts.isnull().sum()
-        # print(null_counts)
-        # rows_with_nulls = ts[ts.isnull().any(axis=1)]
-        # print(rows_with_nulls)
+    #     encoded_time = time2vec_model(time_tensor).detach().numpy()
 
-        return ts
+    #     channel_df = DataFrame(encoded_time, index=ts.index, columns=[f'channel_{i}' for i in range(encoded_time.shape[1])])
+    #     ts = ts.join(channel_df)
+
+    #     # print("Shape after adding 'channel_column':", ts.shape)
+    #     # print(ts.head())
+    #     # null_counts = ts.isnull().sum()
+    #     # print(null_counts)
+    #     # rows_with_nulls = ts[ts.isnull().any(axis=1)]
+    #     # print(rows_with_nulls)
+
+    #     return ts
+
 
     @cached_property
     def dataset(self) -> DataFrame:
-        r"""Load the dataset."""
+        r"""Load the dataset and restrict observed channels to 1 at each time point."""
         ds = Physionet2012_Dataset()
-        # pdb.set_trace()
-        # Standardization is performed over full data slice, including test!
-        # https://github.com/mbilos/neural-flows-experiments/blob/
-        # bd19f7c92461e83521e268c1a235ef845a3dd963/nfe/experiments/gru_ode_bayes/lib/get_data.py#L50-L63
 
-        # Standardize the x-values, min-max scale the t values.
+        # Load and concatenate the dataset as before
         ts_ = ds.dataset
         tsa = ts_['A'][0]
         tsb = ts_['B'][0]
         tsc = ts_['C'][0]
-        # tsc = tsc.drop(columns=[''])
         ts = pd.concat([tsa, tsb, tsc])
+
+        # Standardize the x-values and min-max scale the t values
         self.encoder.fit(ts)
         ts = self.encoder.encode(ts)
         index_encoder = self.encoder.index_encoders["Time"]
         self.observation_time /= index_encoder.param.xmax  # type: ignore[assignment]
 
-        # drop values outside 5 sigma range
+        # Drop values outside 5 sigma range
         ts = ts[(-5 < ts) & (ts < 5)]
         ts = ts.dropna(axis=1, how="all").copy()
+
         return ts
+
+
+
 
     @cached_property
     def folds(self) -> list[dict[str, Sequence[int]]]:
@@ -379,6 +383,27 @@ class Physionet2012(BaseTask):
         )
         kwargs: dict[str, Any] = {"collate_fn": lambda *x: x} | dataloader_kwargs
         return DataLoader(dataset, **kwargs)
+    
+    # def get_dataloader(self, key: tuple[int, str], /, **dataloader_kwargs: Any) -> DataLoader:
+    #     fold, partition = key
+    #     fold_idx = self.folds[fold][partition]
+
+    #     print(partition)
+    #     # Apply Time2Vec transformation ONLY to the training set
+    #     if partition == "train" and self.apply_time2vec:
+    #         dataset = self.apply_time2vec_transformation(self.dataset.loc[fold_idx])
+    #     else:
+    #         dataset = self.dataset.loc[fold_idx]
+        
+    #     task_dataset = TaskDataset(
+    #         [(t, x) for idx, (t, x) in self.tensors.items() if idx in fold_idx],
+    #         observation_time=self.observation_time,
+    #         prediction_steps=self.prediction_steps,
+    #     )
+        
+    #     kwargs: dict[str, Any] = {"collate_fn": lambda *x: x} | dataloader_kwargs
+    #     return DataLoader(task_dataset, **kwargs)
+
 
 
 # Remark: The following code is found in the repo:

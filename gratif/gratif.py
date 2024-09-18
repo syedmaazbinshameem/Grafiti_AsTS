@@ -107,7 +107,8 @@ class GrATiF(nn.Module):
         input_dim=41,
         attn_head=4,
         latent_dim = 128,
-        n_layers=2,
+        n_layers=8,
+        extra_channels=1,
         device='cuda'):
         super().__init__()
         self.dim=input_dim
@@ -115,17 +116,25 @@ class GrATiF(nn.Module):
         self.latent_dim = latent_dim
         self.n_layers=n_layers
         self.device=device
-        self.enc = gratif_layers.Encoder(self.dim, self.latent_dim, self.n_layers, self.attn_head, device=device)
+        self.extra_channels=extra_channels
+        self.enc = gratif_layers.EncoderS(self.dim, self.latent_dim, self.n_layers, self.extra_channels, self.attn_head, device=device)
+        # self.enc = gratif_layers.Encoder(self.dim, self.latent_dim, self.n_layers, self.attn_head, device=device)
 
-    def get_extrapolation(self, context_x, context_w, target_x, target_y):
+
+    def get_extrapolation(self, context_x, context_w, target_x, target_y): # context_x, context_y, target_x, target_y
         context_mask = context_w[:, :, self.dim:]
+        # print(context_w.shape)
+        # print(context_x.shape)
         X = context_w[:, :, :self.dim]
         X = X*context_mask
         context_mask = context_mask + target_y[:,:,self.dim:]
         output, target_U_, target_mask_ = self.enc(context_x, X, context_mask, target_y[:,:,:self.dim], target_y[:,:,self.dim:])
+
         return output, target_U_, target_mask_
 
     def convert_data(self,  x_time, x_vals, x_mask, y_time, y_vals, y_mask):
+        # x_time = B x T
+        # x_vals = B x T x C
         return x_time, torch.cat([x_vals, x_mask],-1), y_time, torch.cat([y_vals, y_mask],-1)  
 
     def forward(self, x_time, x_vals, x_mask, y_time, y_vals, y_mask):
