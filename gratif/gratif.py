@@ -108,17 +108,19 @@ class GrATiF(nn.Module):
         attn_head=4,
         latent_dim = 128,
         n_layers=8,
-        extra_channels=1,
+        extra_channels=4,
         device='cuda'):
         super().__init__()
         self.dim=input_dim
         self.attn_head=attn_head
         self.latent_dim = latent_dim
         self.n_layers=n_layers
-        self.device=device
         self.extra_channels=extra_channels
-        self.enc = gratif_layers.EncoderS(self.dim, self.latent_dim, self.n_layers, self.extra_channels, self.attn_head, device=device)
+        self.device=device
+        # self.extra_channels=extra_channels
+        self.enc = gratif_layers.EncoderR(self.dim, self.latent_dim, self.n_layers, self.extra_channels, self.attn_head, device=device)
         # self.enc = gratif_layers.Encoder(self.dim, self.latent_dim, self.n_layers, self.attn_head, device=device)
+        # self.enc = gratif_layers.EncoderF(self.dim, self.latent_dim, self.n_layers, self.extra_channels, self.attn_head, device=device)
 
 
     def get_extrapolation(self, context_x, context_w, target_x, target_y): # context_x, context_y, target_x, target_y

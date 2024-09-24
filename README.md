@@ -2,7 +2,9 @@
 
 This is the source code for the paper ``GraFITi: Graphs for Forecasting of Irregularly sampled Time Series``
 Slight modification done for our Student Research Project (SRP):
-Toggle apply_time2vec in train_grafiti.py file to apply SRP change.
+gratif_layers has new Encoders.
+EncoderS, EncoderR and EncoderF have Similarity, Random and Time embeddings respectively.
+Use respective Encoder in the gratif file.
 
 
 # Requirements

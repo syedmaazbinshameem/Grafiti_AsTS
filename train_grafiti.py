@@ -13,7 +13,7 @@ parser.add_argument("-bs", "--batch-size",   default=32,     type=int,   help="b
 parser.add_argument("-lr", "--learn-rate",   default=0.001,  type=float, help="learn-rate")
 parser.add_argument("-b",  "--betas", default=(0.9, 0.999),  type=float, help="adam betas", nargs=2)
 parser.add_argument("-wd", "--weight-decay", default=0.001,  type=float, help="weight-decay")
-parser.add_argument("-hs", "--hidden-size",  default=32,    type=int,   help="hidden-size")
+parser.add_argument("-hs", "--hidden-size",  default=128,    type=int,   help="hidden-size")
 parser.add_argument("-ki", "--kernel-init",  default="skew-symmetric",   help="kernel-inititialization")
 parser.add_argument("-n",  "--note",         default="",     type=str,   help="Note that can be added")
 parser.add_argument("-s",  "--seed",         default=None,   type=int,   help="Set the random seed.")
