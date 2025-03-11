@@ -3,8 +3,7 @@
 This is the source code for the paper ``GraFITi: Graphs for Forecasting of Irregularly sampled Time Series``
 Slight modification done for our Student Research Project (SRP):
 gratif_layers has new Encoders.
-EncoderS, EncoderR and EncoderF have Similarity, Random and Time embeddings respectively.
-Use respective Encoder in the gratif file.
+EncoderR encodes additional fully observed channels.
 
 
 # Requirements
