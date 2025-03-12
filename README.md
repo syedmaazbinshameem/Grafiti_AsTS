@@ -1,6 +1,7 @@
 # GraFITi
 
-This is the source code for the paper ``Graphs for Asynchronous Time Series Forecasting``
+This is the source code for the paper ``Graphs for Asynchronous Time Series Forecasting``.
+The code is taken from ``GraFITi: Graphs for Forecasting Irregularly Sampled Time Series`` (Yalavarthi et. al. https://arxiv.org/pdf/2305.12932)  with changes implemented to the encoders.
 
 # Requirements
 <!-- python                    3.8.11
