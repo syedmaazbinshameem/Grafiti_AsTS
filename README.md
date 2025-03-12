@@ -1,10 +1,6 @@
 # GraFITi
 
-This is the source code for the paper ``GraFITi: Graphs for Forecasting of Irregularly sampled Time Series``
-Slight modification done for our Student Research Project (SRP):
-gratif_layers has new Encoders.
-EncoderR encodes additional fully observed channels.
-
+This is the source code for the paper ``Graphs for Asynchronous Time Series Forecasting``
 
 # Requirements
 <!-- python                    3.8.11
