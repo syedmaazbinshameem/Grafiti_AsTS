@@ -206,15 +206,72 @@ class MIMIC_III_DeBrouwer2019(BaseTask):
     def dataset(self) -> DataFrame:
         r"""Load the dataset."""
         ts = MIMIC_III_Dataset()["timeseries"]
-        # https://github.com/edebrouwer/gru_ode_bayes/blob/aaff298c0fcc037c62050c14373ad868bffff7d2/data_preproc/Climate/generate_folds.py#L10-L14
         if self.normalize_time:
             ts = ts.reset_index()
             t_max = ts["TIME_STAMP"].max()
             self.observation_time /= t_max
             ts["TIME_STAMP"] /= t_max
             ts = ts.set_index(["UNIQUE_ID", "TIME_STAMP"])
+
         ts = ts.dropna(axis=1, how="all").copy()
+        print(ts.head())
+
+        return_percentage = 0.0
+
+        asynchronized_ts = ts.copy()
+
+        # Track which values we manually set to NaN
+        manually_set_nan = []
+
+        # For each row, randomly select one column to keep the value, others will be NaN
+        for i, row in ts.iterrows():
+            non_null_indices = row.dropna().index
+
+            if len(non_null_indices) > 0:
+                keep_idx = np.random.choice(non_null_indices, size=1)
+                cols_to_nan = row.index.difference(keep_idx)
+
+                # Record the cells we are going to set to NaN
+                for col in cols_to_nan:
+                    manually_set_nan.append((i, col))
+
+                asynchronized_ts.loc[i, cols_to_nan] = np.nan
+
+        print("\nAsynchronized DataFrame head:")
+        print(asynchronized_ts.head())
+
+        if 0.0 < return_percentage < 1.0:
+            n_total_set_nan = len(manually_set_nan)
+            n_to_return = int(n_total_set_nan * return_percentage)
+            print(f"\nAttempting to return {return_percentage*100:.0f}% of the manually set NaN values ({n_to_return} values).")
+
+            if n_to_return > 0:
+                indices_to_restore = np.random.choice(len(manually_set_nan), size=n_to_return, replace=False)
+
+                for idx in indices_to_restore:
+                    row_idx, col_idx = manually_set_nan[idx]
+                    original_value = ts.loc[row_idx, col_idx]
+                    asynchronized_ts.loc[row_idx, col_idx] = original_value
+
+            print("\nDataFrame head after returning some NaN values:")
+            print(asynchronized_ts.head())
+
+        ts = asynchronized_ts
+
         return ts
+
+        # # For each row, randomly select one column to keep the value, others will be NaN
+        # for i, row in ts.iterrows():
+        #     # Get indices of non-null values
+        #     non_null_indices = row.dropna().index
+            
+        #     # If there are values, randomly choose one index to keep
+        #     if len(non_null_indices) > 0:
+        #         keep_idx = np.random.choice(non_null_indices, size=1)
+        #         ts.loc[i, row.index.difference(keep_idx)] = np.nan
+        
+        # print(ts.head())
+        # return ts
 
     @cached_property
     def folds(self) -> list[dict[str, Sequence[int]]]:

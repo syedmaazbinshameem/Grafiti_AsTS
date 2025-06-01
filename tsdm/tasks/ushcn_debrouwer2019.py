@@ -220,7 +220,22 @@ class USHCN_DeBrouwer2019(BaseTask):
             ts["Time"] /= t_max
             ts = ts.set_index(["ID", "Time"])
         ts = ts.dropna(axis=1, how="all").copy()
+        print(ts.head())
 
+        # # seed = 42
+        # # np.random.seed(seed)
+
+        # For each row, randomly select one column to keep the value, others will be NaN
+        for i, row in ts.iterrows():
+            # Get indices of non-null values
+            non_null_indices = row.dropna().index
+            
+            # If there are values, randomly choose one index to keep
+            if len(non_null_indices) > 0:
+                keep_idx = np.random.choice(non_null_indices, size=1)
+                ts.loc[i, row.index.difference(keep_idx)] = np.nan
+        
+        print(ts.head())
         return ts
 
     @cached_property
@@ -346,7 +361,8 @@ class USHCN_DeBrouwer2019(BaseTask):
             observation_time=self.observation_time,
             prediction_steps=self.prediction_steps,
         )
-        # print(dataset.prediction_steps)
+        print("Prediction Steps for USHCN")
+        print(dataset.prediction_steps)
         kwargs: dict[str, Any] = {"collate_fn": lambda *x: x} | dataloader_kwargs
         return DataLoader(dataset, **kwargs)
     

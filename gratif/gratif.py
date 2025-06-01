@@ -108,7 +108,7 @@ class GrATiF(nn.Module):
         attn_head=4,
         latent_dim = 128,
         n_layers=8,
-        extra_channels=4,
+        extra_channels=0,
         device='cuda'):
         super().__init__()
         self.dim=input_dim
@@ -118,8 +118,8 @@ class GrATiF(nn.Module):
         self.extra_channels=extra_channels
         self.device=device
         # self.extra_channels=extra_channels
-        self.enc = gratif_layers.EncoderR(self.dim, self.latent_dim, self.n_layers, self.extra_channels, self.attn_head, device=device)
-        # self.enc = gratif_layers.Encoder(self.dim, self.latent_dim, self.n_layers, self.attn_head, device=device)
+        # self.enc = gratif_layers.EncoderR(self.dim, self.latent_dim, self.n_layers, self.extra_channels, self.attn_head, device=device)
+        self.enc = gratif_layers.Encoder(self.dim, self.latent_dim, self.n_layers, self.attn_head, device=device)
         # self.enc = gratif_layers.EncoderF(self.dim, self.latent_dim, self.n_layers, self.extra_channels, self.attn_head, device=device)
 
 
